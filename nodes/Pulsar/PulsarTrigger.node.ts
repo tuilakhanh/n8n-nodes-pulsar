@@ -1,13 +1,13 @@
 import { IDataObject, INodeType, INodeTypeDescription, ITriggerFunctions, ITriggerResponse } from 'n8n-workflow';
-import { Client, Consumer, ConsumerConfig, SubscriptionType } from 'pulsar-client';
+import { Client, Consumer, ConsumerConfig, SubscriptionType, AuthenticationToken } from 'pulsar-client';
 
 export class PulsarTrigger implements INodeType {
     description: INodeTypeDescription = {
         displayName: 'Pulsar Trigger',
         name: 'pulsarTrigger',
-        icon: { 
-            light: 'file:../../assets/pulsar-light.svg', 
-            dark: 'file:../../assets/pulsar-dark.svg' 
+        icon: {
+            light: 'file:../../assets/pulsar-light.svg',
+            dark: 'file:../../assets/pulsar-dark.svg'
         },
         group: ['trigger'],
         version: 1,
@@ -144,7 +144,7 @@ export class PulsarTrigger implements INodeType {
             },
         ],
     };
-    
+
     async trigger(this: ITriggerFunctions): Promise<ITriggerResponse | undefined> {
 
         const subscription = this.getNodeParameter('subscriptionName') as string;
@@ -165,7 +165,8 @@ export class PulsarTrigger implements INodeType {
             ...options
         };
 
-        const client = new Client({ serviceUrl: credentials.serviceUrl as string });
+				const auth = new AuthenticationToken({token: credentials.authentication as string});
+        const client = new Client({ serviceUrl: credentials.serviceUrl as string, authentication: auth, });
         let consumer: Consumer;
         const startConsumer = async () => {
             if (consumer) {
@@ -173,7 +174,7 @@ export class PulsarTrigger implements INodeType {
             }
             consumer = await client.subscribe({...config,
                 listener: async (msg, msgConsumer ) => {
-                    
+
                     let data: IDataObject = {};
                     let value = msg.getData().toString();
                     if (this.getNodeParameter('jsonParseMessage') as boolean) {

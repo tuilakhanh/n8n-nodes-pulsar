@@ -7,7 +7,7 @@ import {
     NodeOperationError,
     Themed,
 } from "n8n-workflow";
-import { Client, ProducerConfig } from "pulsar-client";
+import { Client, ProducerConfig, AuthenticationToken } from "pulsar-client";
 
 
 export class PulsarPublish implements INodeType {
@@ -19,9 +19,9 @@ export class PulsarPublish implements INodeType {
 
     description: INodeTypeDescription = {
         displayName: "Pulsar Publisher",
-        
+
         name: "pulsarPublish",
-        
+
         icon:  {
             light: 'file:../../assets/pulsar-light.svg',
             dark: 'file:../../assets/pulsar-dark.svg'
@@ -30,13 +30,13 @@ export class PulsarPublish implements INodeType {
         group: ["output"],
 
         version: 1,
-        
+
         description: "Publish messages to Apache Pulsar",
-        
+
         defaults: {
             name: "Pulsar Publisher",
         },
-        
+
         inputs: ["main"],
         outputs: ["main"],
         credentials: [
@@ -160,12 +160,14 @@ export class PulsarPublish implements INodeType {
         const returnData: INodeExecutionData[] = [];
 
         const credentials = await this.getCredentials("pulsarApi");
+				const auth = new AuthenticationToken({token: credentials.authentication as string});
         const client = new Client({
             serviceUrl: credentials.serviceUrl as string,
             operationTimeoutSeconds: 30,
+						authentication: auth,
         });
 
-        const topic = this.getNodeParameter("topic", 0) as string;  
+        const topic = this.getNodeParameter("topic", 0) as string;
         let producerName = this.getNodeParameter("producerName", 0) as string;
 
         if (producerName !== "") {
